@@ -238,9 +238,6 @@ void key_expand_even(dw * key, dw * w, dw * kt, dw * state) {
     }
 
     while (1) {
-        if (round == 9) {
-            printf("HELLO DYAN");
-        }
         memcpy(state, kt, kalyna->state_rows * rows_count);
         add_round_key(state, tmv);
         memcpy(kt_round, state, kalyna->state_rows * rows_count);
