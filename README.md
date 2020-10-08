@@ -9,3 +9,7 @@
 
 ### Unit test:
 - *test_kalyna_512_512.c* - contains unit test for all kalyna standard methods, and examine example encryption/decryption on 512 block and 512 key sizes;
+- *test_kalyna_256_512.c* - contains unit test for all kalyna standard methods, and examine example encryption/decryption on 256 block and 512 key sizes;
+- *test_kalyna_256_256.c* - contains unit test for all kalyna standard methods, and examine example encryption/decryption on 256 block and 256 key sizes;
+- *test_kalyna_128_256.c* - contains unit test for all kalyna standard methods, and examine example encryption/decryption on 128 block and 256 key sizes;
+- *test_kalyna_128_128.c* - contains unit test for all kalyna standard methods, and examine example encryption/decryption on 128 block and 128 key sizes;
