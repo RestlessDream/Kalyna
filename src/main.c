@@ -1,4 +1,5 @@
 #include "kalyna.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +20,7 @@ size_t hexs2bin(const char *hex, unsigned char **out);
 int hexchr2bin(const char hex, char * out);
 
 int parse_arguments(int argc, char ** argv, FILE ** input, FILE ** output, dw * key, bool * op,
-        standart_config * standart, bool * cbc_padding);
+        standart_config ** standart, bool * cbc_padding);
 
 int main(int argc, char ** argv) {
     FILE * input;
@@ -30,7 +31,7 @@ int main(int argc, char ** argv) {
     standart_config * kalyna = &Kalyna_512_512;
     bool cbc_padding = false;
     
-    if (parse_arguments(argc, argv, &input, &output, key, &op_, kalyna, &cbc_padding) != 0) {
+    if (parse_arguments(argc, argv, &input, &output, key, &op_, &kalyna, &cbc_padding) != 0) {
         return 1;
     }
 
@@ -69,9 +70,10 @@ int main(int argc, char ** argv) {
             }
 
             if (cbc_padding) {
-                //add_cbc_padding(rbuffer + kalyna->block_dwsize * read_blocks,
-                //          reads % kalyna_block_bsize);
-                //reads = (read_blocks + 1) * kalyna_block_bsize;
+                add_cbc_padding(rbuffer + kalyna->block_dwsize * read_blocks,
+                          (size_t)((double)(reads % kalyna_block_bsize) / sizeof(dw) + 1),
+                          kalyna->block_dwsize);
+                reads = (read_blocks + 1) * kalyna_block_bsize;
             } else {
                 memset(rbuffer + kalyna->block_dwsize * read_blocks + reads % kalyna_block_bsize,
                         0x0, kalyna_block_bsize - reads % kalyna_block_bsize);
@@ -83,7 +85,8 @@ int main(int argc, char ** argv) {
         }
 
         if (reads < BUFFER_SIZE && !op_ && cbc_padding) {
-            //reads -= del_cbc_padding(wbuffer + read_blocks - kalyna->block_dwsize);
+            reads -= del_cbc_padding(wbuffer + read_blocks - kalyna->block_dwsize,
+                                     kalyna->block_dwsize);
         }
 
         if (fwrite(wbuffer, sizeof(byte), reads, output) == 0) {
@@ -98,7 +101,8 @@ int main(int argc, char ** argv) {
         fseek(output, 0L, SEEK_END);
         long sz = ftell(output);
 
-        //sz -= del_cbc_padding(wbuffer + before_r / sizeof(dw) - kalyna->block_dwsize);
+        sz -= del_cbc_padding(wbuffer + before_r / kalyna_block_bsize - kalyna->block_dwsize,
+                kalyna->block_dwsize);
 
         if (ftruncate(fileno(output), sz) != 0) {
             fprintf(stderr, "File truncate error.");
@@ -117,7 +121,7 @@ int main(int argc, char ** argv) {
 }
 
 int parse_arguments(int argc, char ** argv, FILE ** input, FILE ** output, dw * key, bool * op,
-        standart_config * standart, bool * cbc_padding) {
+        standart_config ** standart, bool * cbc_padding) {
     int option;
     size_t key_len;
     int is_all = 0;
@@ -144,15 +148,15 @@ int parse_arguments(int argc, char ** argv, FILE ** input, FILE ** output, dw * 
                 break;
             case 's':
                 if (strcmp(optarg, "Kalyna_128_128") == 0) {
-                    standart = &Kalyna_128_128;
+                    *standart = &Kalyna_128_128;
                 } else if (strcmp(optarg, "Kalyna_128_256") == 0) {
-                    standart = &Kalyna_128_256;
+                    *standart = &Kalyna_128_256;
                 } else if (strcmp(optarg, "Kalyna_256_256") == 0) {
-                    standart = &Kalyna_256_256;
+                    *standart = &Kalyna_256_256;
                 } else if (strcmp(optarg, "Kalyna_256_512") == 0) {
-                    standart = &Kalyna_256_512;
+                    *standart = &Kalyna_256_512;
                 } else if (strcmp(optarg, "Kalyna_512_512") == 0) {
-                    standart = &Kalyna_512_512;
+                    *standart = &Kalyna_512_512;
                 } else {
                     fprintf(stderr, "%s wrong standart name, looks -h for supported standarts.\n", optarg);
                     return -1;
@@ -189,9 +193,9 @@ Options:\n\
         return -3;
     }
 
-    if (key_len != standart->key_dwlength * sizeof(dw)) {
+    if (key_len != (*standart)->key_dwlength * sizeof(dw)) {
         fprintf(stderr, "Key lenght(%lu) is not standart compliant(%lu).\n",
-                key_len, standart->key_dwlength * sizeof(dw));
+                key_len, (*standart)->key_dwlength * sizeof(dw));
 
         return -4;
     }

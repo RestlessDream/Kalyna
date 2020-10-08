@@ -63,10 +63,10 @@ void shift_rows(dw * state) {
     for (size_t i = 0; i < rows_count; i++) {
         size_t shift_s = (i * kalyna->block_dwsize) / max_block_dwsize; 
 
-        for (size_t j = 0; j < shift_s; j++) {
+        for (int j = 0; j < shift_s; j++) {
             byte swp = ((byte *)&state[kalyna->state_rows - 1])[i];
 
-            for (size_t k = kalyna->state_rows - 1; k > 0; k--) {
+            for (int k = kalyna->state_rows - 1; k > 0; k--) {
                 ((byte *)&state[k])[i] = ((byte *)&state[k - 1])[i];
             }
             ((byte *)&state[0])[i] = swp;
@@ -121,7 +121,7 @@ byte multiplyGF(byte x, byte y) {
 }
 
 void xor_round_key(dw * state, const dw * w) {
-    for (size_t i = 0; i < rows_count; i++) {
+    for (size_t i = 0; i < kalyna->state_rows; i++) {
         state[i] ^= w[i];
     }
 }
@@ -203,9 +203,9 @@ void key_expand_kt(dw * key, dw * kt, dw * state) {
     dw * k1 = malloc(rows_count * kalyna->state_rows);
 
     memset(state, 0, rows_count * kalyna->state_rows);
-    ((byte *)state)[0] = rows_count + kalyna->state_rows + 1; 
+    ((byte *)state)[0] = kalyna->key_dwlength + kalyna->state_rows + 1; 
 
-    if (rows_count == kalyna->state_rows) {
+    if (kalyna->key_dwlength == kalyna->state_rows) {
         k0 = memcpy(k0, key, rows_count * kalyna->state_rows);
         k1 = memcpy(k1, key, rows_count * kalyna->state_rows);
     } else {
@@ -234,12 +234,15 @@ void key_expand_even(dw * key, dw * w, dw * kt, dw * state) {
     memcpy(initial_data, key, kalyna->key_dwlength * rows_count);
 
     for (int i = 0; i < kalyna->state_rows; i++) {
+        //tmv[i] = 0x0010001000100010;
         tmv[i] = 0x0001000100010001;
     }
 
     while (1) {
         memcpy(state, kt, kalyna->state_rows * rows_count);
+
         add_round_key(state, tmv);
+
         memcpy(kt_round, state, kalyna->state_rows * rows_count);
 
         memcpy(state, initial_data, kalyna->state_rows * rows_count);
@@ -326,34 +329,6 @@ void rotate_left(size_t state_size, dw * state_value) {
 
     free(buffer);
 }
-
-//void add_cbc_padding(byte * block, size_t size) {
-//    if (size >= block_bsize) {
-//        return;
-//    }
-//
-//    byte padding_num = block_bsize - size;
-//
-//    for (size_t i = size; i < block_bsize; i++) {
-//        block[i] = padding_num;
-//    }
-//}
-//
-//size_t del_cbc_padding(byte * block) {
-//    byte padding_num = block[block_bsize - 1];
-//
-//    if (padding_num >= block_bsize) {
-//        return 0;
-//    }
-//
-//    for (int i = block_bsize - 2; i >= block_bsize - padding_num; i--) {
-//        if (block[i] != padding_num) {
-//            return 0;
-//        }
-//    }
-//
-//    return padding_num;
-//}
 
 void setup(standart_config * kalyna_standart) {
     kalyna = kalyna_standart;

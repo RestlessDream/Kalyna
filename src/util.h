@@ -5,15 +5,10 @@
 
 #include "stdlib.h"
 
-void ** malloc_2d(size_t rows, size_t elm_arr_size);
-void free_2d(void ** m2d, size_t rows);
 byte high_bits(byte val);
 byte low_bits(byte val);
-void shift(size_t r, byte * arr, size_t size);
-void right_shift(size_t r, byte * arr, size_t size);
-void copy_column(byte ** src, byte * dest, size_t rsize, size_t cindex);
-void copy_to_column(byte * src, byte ** dest, size_t rsize, size_t cindex);
-byte mul_bytes(byte a, byte b);
 void to_endian(dw * state, size_t size);
+size_t del_cbc_padding(dw * block, size_t block_dwsize);
+void add_cbc_padding(dw * block, size_t size, size_t block_dwsize);
 
 #endif // UTIL_H_

@@ -29,7 +29,5 @@ void key_expand_odd(dw * state, dw * w);
 void shift_left(size_t state_size, dw * state_value);
 void rotate(size_t state_size, dw * state_value);
 void rotate_left(size_t state_size, dw * state_value);
-void add_cbc_padding(byte * block, size_t size);
-size_t del_cbc_padding(byte * block);
 
 #endif // _KALYNA_H_
